@@ -18,8 +18,8 @@
 package org.apache.shardingsphere.core.route.hook;
 
 import lombok.SneakyThrows;
-import org.apache.shardingsphere.core.metadata.table.TableMetas;
-import org.apache.shardingsphere.core.route.SQLRouteResult;
+import org.apache.shardingsphere.underlying.common.metadata.table.TableMetas;
+import org.apache.shardingsphere.core.route.ShardingRouteContext;
 import org.apache.shardingsphere.core.route.fixture.RoutingHookFixture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,14 +33,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SPIRoutingHookTest {
+public final class SPIRoutingHookTest {
     
-    private SPIRoutingHook spiRoutingHook = new SPIRoutingHook();
-    
-    private String sql = "select * from table";
+    private final SPIRoutingHook spiRoutingHook = new SPIRoutingHook();
     
     @Mock
-    private SQLRouteResult sqlRouteResult;
+    private ShardingRouteContext routeContext;
     
     @Mock
     private TableMetas tableMetas;
@@ -50,6 +48,7 @@ public class SPIRoutingHookTest {
     
     @Test
     public void assertStart() {
+        String sql = "SELECT * FROM table";
         spiRoutingHook.start(sql);
         RoutingHook routingHook = getFixtureHook();
         assertThat(routingHook, instanceOf(RoutingHookFixture.class));
@@ -58,10 +57,10 @@ public class SPIRoutingHookTest {
     
     @Test
     public void assertFinishSuccess() {
-        spiRoutingHook.finishSuccess(sqlRouteResult, tableMetas);
+        spiRoutingHook.finishSuccess(routeContext, tableMetas);
         RoutingHook routingHook = getFixtureHook();
         assertThat(routingHook, instanceOf(RoutingHookFixture.class));
-        assertThat(((RoutingHookFixture) routingHook).getSqlRouteResult(), is(sqlRouteResult));
+        assertThat(((RoutingHookFixture) routingHook).getRouteContext(), is(routeContext));
         assertThat(((RoutingHookFixture) routingHook).getTableMetas(), is(tableMetas));
     }
     
@@ -73,6 +72,7 @@ public class SPIRoutingHookTest {
         assertThat(((RoutingHookFixture) routingHook).getCause(), is(exception));
     }
     
+    @SuppressWarnings("unchecked")
     @SneakyThrows
     private RoutingHook getFixtureHook() {
         Field routingHooksField = SPIRoutingHook.class.getDeclaredField("routingHooks");

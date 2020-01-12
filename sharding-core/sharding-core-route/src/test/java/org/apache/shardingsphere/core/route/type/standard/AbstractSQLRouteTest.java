@@ -17,22 +17,24 @@
 
 package org.apache.shardingsphere.core.route.type.standard;
 
-import org.apache.shardingsphere.core.database.DatabaseTypes;
-import org.apache.shardingsphere.core.metadata.ShardingSphereMetaData;
-import org.apache.shardingsphere.core.metadata.column.ColumnMetaData;
-import org.apache.shardingsphere.core.metadata.datasource.DataSourceMetas;
-import org.apache.shardingsphere.core.metadata.table.TableMetaData;
-import org.apache.shardingsphere.core.metadata.table.TableMetas;
-import org.apache.shardingsphere.core.parse.SQLParseEngine;
-import org.apache.shardingsphere.core.route.PreparedStatementRoutingEngine;
-import org.apache.shardingsphere.core.route.SQLRouteResult;
+import org.apache.shardingsphere.core.route.ShardingRouteContext;
 import org.apache.shardingsphere.core.route.fixture.AbstractRoutingEngineTest;
+import org.apache.shardingsphere.core.route.router.sharding.ShardingRouter;
 import org.apache.shardingsphere.core.rule.ShardingRule;
+import org.apache.shardingsphere.sql.parser.SQLParseEngine;
+import org.apache.shardingsphere.sql.parser.SQLParseEngineFactory;
+import org.apache.shardingsphere.underlying.common.config.DatabaseAccessConfiguration;
+import org.apache.shardingsphere.underlying.common.database.type.DatabaseTypes;
+import org.apache.shardingsphere.underlying.common.metadata.ShardingSphereMetaData;
+import org.apache.shardingsphere.underlying.common.metadata.column.ColumnMetaData;
+import org.apache.shardingsphere.underlying.common.metadata.datasource.DataSourceMetas;
+import org.apache.shardingsphere.underlying.common.metadata.table.TableMetaData;
+import org.apache.shardingsphere.underlying.common.metadata.table.TableMetas;
+import org.apache.shardingsphere.underlying.route.context.RouteContext;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,36 +43,39 @@ import static org.junit.Assert.assertThat;
 
 public abstract class AbstractSQLRouteTest extends AbstractRoutingEngineTest {
     
-    protected final SQLRouteResult assertRoute(final String sql, final List<Object> parameters) {
+    protected final RouteContext assertRoute(final String sql, final List<Object> parameters) {
         ShardingRule shardingRule = createAllShardingRule();
         ShardingSphereMetaData metaData = new ShardingSphereMetaData(buildDataSourceMetas(), buildTableMetas());
-        SQLParseEngine parseEngine = new SQLParseEngine(DatabaseTypes.getActualDatabaseType("MySQL"));
-        PreparedStatementRoutingEngine engine = new PreparedStatementRoutingEngine(sql, shardingRule, metaData, parseEngine);
-        SQLRouteResult result = engine.route(parameters);
-        assertThat(result.getRoutingResult().getRoutingUnits().size(), is(1));
+        SQLParseEngine parseEngine = SQLParseEngineFactory.getSQLParseEngine("MySQL");
+        ShardingRouter shardingRouter = new ShardingRouter(shardingRule, metaData, parseEngine);
+        ShardingRouteContext result = shardingRouter.route(sql, parameters, false);
+        assertThat(result.getRouteResult().getRouteUnits().size(), is(1));
         return result;
     }
     
     private DataSourceMetas buildDataSourceMetas() {
-        Map<String, String> shardingDataSourceURLs = new LinkedHashMap<>();
-        shardingDataSourceURLs.put("main", "jdbc:mysql://127.0.0.1:3306/actual_db");
-        shardingDataSourceURLs.put("ds_0", "jdbc:mysql://127.0.0.1:3306/actual_db");
-        shardingDataSourceURLs.put("ds_1", "jdbc:mysql://127.0.0.1:3306/actual_db");
-        return new DataSourceMetas(shardingDataSourceURLs, DatabaseTypes.getActualDatabaseType("MySQL"));
+        Map<String, DatabaseAccessConfiguration> dataSourceInfoMap = new HashMap<>();
+        DatabaseAccessConfiguration mainDatabaseAccessConfiguration = new DatabaseAccessConfiguration("jdbc:mysql://127.0.0.1:3306/actual_db", "test", null);
+        DatabaseAccessConfiguration databaseAccessConfiguration0 = new DatabaseAccessConfiguration("jdbc:mysql://127.0.0.1:3306/actual_db", "test", null);
+        DatabaseAccessConfiguration databaseAccessConfiguration1 = new DatabaseAccessConfiguration("jdbc:mysql://127.0.0.1:3306/actual_db", "test", null);
+        dataSourceInfoMap.put("main", mainDatabaseAccessConfiguration);
+        dataSourceInfoMap.put("ds_0", databaseAccessConfiguration0);
+        dataSourceInfoMap.put("ds_1", databaseAccessConfiguration1);
+        return new DataSourceMetas(DatabaseTypes.getActualDatabaseType("MySQL"), dataSourceInfoMap);
     }
     
     private TableMetas buildTableMetas() {
         Map<String, TableMetaData> tableMetaDataMap = new HashMap<>(3, 1);
-        tableMetaDataMap.put("t_order", new TableMetaData(Arrays.asList(new ColumnMetaData("order_id", "int", true, true, true), 
-                new ColumnMetaData("user_id", "int", false, false, false), 
-                new ColumnMetaData("status", "int", false, false, false)), Collections.<String>emptySet()));
-        tableMetaDataMap.put("t_order_item", new TableMetaData(Arrays.asList(new ColumnMetaData("item_id", "int", true, true, true), 
-                new ColumnMetaData("order_id", "int", false, false, false),
-                new ColumnMetaData("user_id", "int", false, false, false), 
-                new ColumnMetaData("status", "varchar", false, false, false), 
-                new ColumnMetaData("c_date", "timestamp", false, false, false)), Collections.<String>emptySet()));
-        tableMetaDataMap.put("t_other", new TableMetaData(Arrays.asList(new ColumnMetaData("order_id", "int", true, true, true)), Collections.<String>emptySet()));
-        tableMetaDataMap.put("t_category", new TableMetaData(Arrays.asList(new ColumnMetaData("order_id", "int", true, true, true)), Collections.<String>emptySet()));
+        tableMetaDataMap.put("t_order", new TableMetaData(Arrays.asList(new ColumnMetaData("order_id", "int", true), 
+                new ColumnMetaData("user_id", "int", false), 
+                new ColumnMetaData("status", "int", false)), Collections.<String>emptySet()));
+        tableMetaDataMap.put("t_order_item", new TableMetaData(Arrays.asList(new ColumnMetaData("item_id", "int", true), 
+                new ColumnMetaData("order_id", "int", false),
+                new ColumnMetaData("user_id", "int", false), 
+                new ColumnMetaData("status", "varchar", false), 
+                new ColumnMetaData("c_date", "timestamp", false)), Collections.<String>emptySet()));
+        tableMetaDataMap.put("t_other", new TableMetaData(Collections.singletonList(new ColumnMetaData("order_id", "int", true)), Collections.<String>emptySet()));
+        tableMetaDataMap.put("t_category", new TableMetaData(Collections.singletonList(new ColumnMetaData("order_id", "int", true)), Collections.<String>emptySet()));
         return new TableMetas(tableMetaDataMap);
     }
 }

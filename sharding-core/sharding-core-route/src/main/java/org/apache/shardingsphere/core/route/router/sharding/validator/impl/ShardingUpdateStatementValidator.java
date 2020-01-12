@@ -20,19 +20,19 @@ package org.apache.shardingsphere.core.route.router.sharding.validator.impl;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.shardingsphere.core.exception.ShardingException;
-import org.apache.shardingsphere.core.preprocessor.segment.table.TablesContext;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.assignment.AssignmentSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.expr.ExpressionSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.expr.simple.LiteralExpressionSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.expr.simple.ParameterMarkerExpressionSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.predicate.AndPredicate;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.predicate.PredicateSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.predicate.WhereSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.predicate.value.PredicateCompareRightValue;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.predicate.value.PredicateInRightValue;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.predicate.value.PredicateRightValue;
-import org.apache.shardingsphere.core.parse.sql.statement.dml.UpdateStatement;
+import org.apache.shardingsphere.underlying.common.exception.ShardingSphereException;
+import org.apache.shardingsphere.sql.parser.relation.segment.table.TablesContext;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.assignment.AssignmentSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.expr.ExpressionSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.expr.simple.LiteralExpressionSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.expr.simple.ParameterMarkerExpressionSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.predicate.AndPredicate;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.predicate.PredicateSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.predicate.WhereSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.predicate.value.PredicateCompareRightValue;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.predicate.value.PredicateInRightValue;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.predicate.value.PredicateRightValue;
+import org.apache.shardingsphere.sql.parser.sql.statement.dml.UpdateStatement;
 import org.apache.shardingsphere.core.route.router.sharding.validator.ShardingStatementValidator;
 import org.apache.shardingsphere.core.rule.ShardingRule;
 
@@ -60,7 +60,7 @@ public final class ShardingUpdateStatementValidator implements ShardingStatement
                 if (shardingColumnSetAssignmentValue.isPresent() && shardingValue.isPresent() && shardingColumnSetAssignmentValue.get().equals(shardingValue.get())) {
                     continue;
                 }
-                throw new ShardingException("Can not update sharding key, logic table: [%s], column: [%s].", tableName, each);
+                throw new ShardingSphereException("Can not update sharding key, logic table: [%s], column: [%s].", tableName, each);
             }
         }
     }

@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.core.route.type.standard;
 
-import org.apache.shardingsphere.core.route.SQLRouteResult;
+import org.apache.shardingsphere.underlying.route.context.RouteContext;
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -26,7 +26,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class SQLRouteTest extends AbstractSQLRouteTest {
+public final class SQLRouteTest extends AbstractSQLRouteTest {
     
     @Test
     public void assertNoTableUnicastRandomDataSource() {
@@ -41,8 +41,8 @@ public class SQLRouteTest extends AbstractSQLRouteTest {
         String sql = "SELECT id,name from t_other where id = ?";
         List<Object> parameters = new LinkedList<>();
         parameters.add(1);
-        SQLRouteResult result = assertRoute(sql, parameters);
-        assertThat("assert default datasource name", result.getRoutingResult().getRoutingUnits().iterator().next().getDataSourceName(), is("main"));
+        RouteContext result = assertRoute(sql, parameters);
+        assertThat("assert default datasource name", result.getRouteResult().getRouteUnits().iterator().next().getActualDataSourceName(), is("main"));
     }
     
     @Test

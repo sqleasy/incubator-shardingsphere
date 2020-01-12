@@ -17,48 +17,49 @@
 
 package org.apache.shardingsphere.orchestration.config.apollo;
 
-import com.ctrip.framework.apollo.core.ConfigConsts;
 import com.ctrip.framework.apollo.mockserver.EmbeddedApollo;
 import org.apache.shardingsphere.orchestration.config.api.ConfigCenter;
 import org.apache.shardingsphere.orchestration.config.api.ConfigCenterConfiguration;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class ApolloConfigCenterTest {
-
+public final class ApolloConfigCenterTest {
+    
+    static {
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+    }
+    
     @ClassRule
     public static EmbeddedApollo embeddedApollo = new EmbeddedApollo();
-
+    
     private static ConfigCenter configCenter = new ApolloConfigCenter();
-
+    
     @BeforeClass
     public static void init() {
-        Properties properties = new Properties();
-        properties.setProperty("appId", "APOLLO_SHARDING_SPHERE");
-        properties.setProperty("env", "DEV");
-        properties.setProperty("clusterName", ConfigConsts.CLUSTER_NAME_DEFAULT);
-        ConfigCenterConfiguration configuration = new ConfigCenterConfiguration(configCenter.getType(), properties);
-        configuration.setServerLists("127.0.0.1:8080");
+        ConfigCenterConfiguration configuration = new ConfigCenterConfiguration(configCenter.getType(), new Properties());
+        configuration.setServerLists("http://config-service-url");
         configuration.setNamespace("orchestration");
         configCenter.init(configuration);
     }
-
+    
     @Test
     public void assertGet() {
         assertThat(configCenter.get("key1"), is("value1"));
     }
-
+    
     @Test
     public void assertGetDirectly() {
         assertThat(configCenter.getDirectly("key2"), is("value2"));
     }
-
+    
     @Test
     public void assertIsExisted() {
         assertThat(configCenter.isExisted("key1"), is(true));

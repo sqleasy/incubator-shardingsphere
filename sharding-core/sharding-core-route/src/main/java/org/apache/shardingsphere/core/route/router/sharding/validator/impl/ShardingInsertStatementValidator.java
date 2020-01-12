@@ -18,12 +18,12 @@
 package org.apache.shardingsphere.core.route.router.sharding.validator.impl;
 
 import com.google.common.base.Optional;
-import org.apache.shardingsphere.core.exception.ShardingException;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.column.ColumnSegment;
-import org.apache.shardingsphere.core.parse.sql.segment.dml.column.OnDuplicateKeyColumnsSegment;
-import org.apache.shardingsphere.core.parse.sql.statement.dml.InsertStatement;
 import org.apache.shardingsphere.core.route.router.sharding.validator.ShardingStatementValidator;
 import org.apache.shardingsphere.core.rule.ShardingRule;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.assignment.AssignmentSegment;
+import org.apache.shardingsphere.sql.parser.sql.segment.dml.column.OnDuplicateKeyColumnsSegment;
+import org.apache.shardingsphere.sql.parser.sql.statement.dml.InsertStatement;
+import org.apache.shardingsphere.underlying.common.exception.ShardingSphereException;
 
 import java.util.List;
 
@@ -38,13 +38,13 @@ public final class ShardingInsertStatementValidator implements ShardingStatement
     public void validate(final ShardingRule shardingRule, final InsertStatement sqlStatement, final List<Object> parameters) {
         Optional<OnDuplicateKeyColumnsSegment> onDuplicateKeyColumnsSegment = sqlStatement.findSQLSegment(OnDuplicateKeyColumnsSegment.class);
         if (onDuplicateKeyColumnsSegment.isPresent() && isUpdateShardingKey(shardingRule, onDuplicateKeyColumnsSegment.get(), sqlStatement.getTable().getTableName())) {
-            throw new ShardingException("INSERT INTO .... ON DUPLICATE KEY UPDATE can not support update for sharding column.");
+            throw new ShardingSphereException("INSERT INTO .... ON DUPLICATE KEY UPDATE can not support update for sharding column.");
         }
     }
     
     private boolean isUpdateShardingKey(final ShardingRule shardingRule, final OnDuplicateKeyColumnsSegment onDuplicateKeyColumnsSegment, final String tableName) {
-        for (ColumnSegment each : onDuplicateKeyColumnsSegment.getColumns()) {
-            if (shardingRule.isShardingColumn(each.getName(), tableName)) {
+        for (AssignmentSegment each : onDuplicateKeyColumnsSegment.getColumns()) {
+            if (shardingRule.isShardingColumn(each.getColumn().getName(), tableName)) {
                 return true;
             }
         }
